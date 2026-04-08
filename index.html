@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GRAF TGN</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c0202a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GRAF TGN">
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --red: #c0202a;
+  --red-dark: #9e1821;
+  --sidebar-w: 220px;
+  --sidebar-col: 54px;
+  --topbar-h: 52px;
+}
+body { font-family: 'Source Sans 3', sans-serif; background: #efefef; color: #222; overflow-x: hidden; }
+
+/* TOPBAR */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--topbar-h);
+  background: var(--red);
+  display: flex; align-items: center; gap: 14px; padding: 0 18px;
+  z-index: 200; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.topbar-toggle {
+  background: none; border: none; cursor: pointer;
+  display: flex; flex-direction: column; gap: 5px;
+  padding: 7px; border-radius: 5px; transition: background 0.15s;
+}
+.topbar-toggle:hover { background: rgba(255,255,255,0.15); }
+.topbar-toggle span { display: block; width: 19px; height: 2px; background: #fff; border-radius: 2px; }
+.topbar-brand {
+  display: flex; align-items: center; gap: 9px;
+  color: #fff; font-weight: 700; font-size: 16px;
+  letter-spacing: 0.03em; text-decoration: none; user-select: none;
+}
+.topbar-page {
+  margin-left: auto; color: rgba(255,255,255,0.7);
+  font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+}
+
+/* SHELL */
+.shell { display: flex; padding-top: var(--topbar-h); min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  position: fixed; top: var(--topbar-h); left: 0; bottom: 0;
+  width: var(--sidebar-w); background: #181818;
+  display: flex; flex-direction: column;
+  overflow: hidden; transition: width 0.24s cubic-bezier(.4,0,.2,1);
+  z-index: 100;
+}
+.sidebar.collapsed { width: var(--sidebar-col); }
+
+.sb-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: rgba(255,255,255,0.28);
+  padding: 18px 16px 5px; white-space: nowrap;
+  transition: opacity 0.18s;
+}
+.sidebar.collapsed .sb-label { opacity: 0; pointer-events: none; }
+
+.nav-btn {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 16px; height: 46px;
+  color: rgba(255,255,255,0.6); text-decoration: none;
+  cursor: pointer; border: none; background: none;
+  font-family: inherit; font-size: 13.5px; font-weight: 600;
+  white-space: nowrap; overflow: hidden;
+  border-left: 3px solid transparent;
+  transition: color 0.14s, background 0.14s, border-color 0.14s;
+  width: 100%; text-align: left;
+}
+.nav-btn:hover { color: #fff; background: rgba(255,255,255,0.06); }
+.nav-btn.active { color: #fff; background: rgba(192,32,42,0.25); border-left-color: var(--red); }
+.nav-ico { flex-shrink: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+.nav-ico svg { width: 17px; height: 17px; }
+.nav-lbl { overflow: hidden; text-overflow: ellipsis; transition: opacity 0.18s; }
+.sidebar.collapsed .nav-lbl { opacity: 0; pointer-events: none; }
+
+.sb-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 6px 0; }
+.sb-footer { margin-top: auto; padding-bottom: 14px; border-top: 1px solid rgba(255,255,255,0.07); }
+
+/* MAIN */
+.main {
+  flex: 1; margin-left: var(--sidebar-w);
+  transition: margin-left 0.24s cubic-bezier(.4,0,.2,1);
+}
+.main.wide { margin-left: var(--sidebar-col); }
+
+.page {
+  display: none; padding: 30px 30px 60px;
+  max-width: 1080px;
+  animation: fadeIn 0.18s ease;
+}
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+
+/* PAGE HEADER */
+.ph { margin-bottom: 26px; padding-bottom: 14px; border-bottom: 2px solid #ddd; }
+.ph h1 { font-size: 20px; font-weight: 700; color: #1a1a1a; display: flex; align-items: center; gap: 10px; }
+.ph h1 svg { width: 20px; height: 20px; color: var(--red); flex-shrink: 0; }
+.ph p { margin-top: 4px; font-size: 13px; color: #888; }
+
+/* SECTION */
+.sec { margin-bottom: 32px; }
+.sec-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: #999; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.sec-title::after { content: ''; flex: 1; height: 1px; background: #e0e0e0; }
+
+/* TILES */
+.tiles { display: flex; flex-wrap: wrap; gap: 10px; }
+.tile {
+  background: var(--red); color: #fff;
+  width: 118px; height: 104px; border-radius: 7px;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 8px;
+  cursor: pointer; text-decoration: none;
+  padding: 10px 8px; text-align: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+  transition: background 0.14s, transform 0.12s, box-shadow 0.14s;
+}
+.tile:hover { background: var(--red-dark); transform: translateY(-3px); box-shadow: 0 6px 18px rgba(192,32,42,0.32); }
+.tile:active { transform: translateY(-1px); }
+.tile svg { width: 30px; height: 30px; flex-shrink: 0; }
+.tile span { font-size: 11px; font-weight: 600; line-height: 1.25; }
+
+/* PLACEHOLDER */
+.placeholder {
+  background: #fff; border: 1px dashed #ccc; border-radius: 8px;
+  padding: 60px 32px; text-align: center; color: #bbb;
+}
+.placeholder svg { width: 36px; height: 36px; margin: 0 auto 12px; display: block; opacity: 0.35; }
+.placeholder p { font-size: 13px; }
+
+/* WEATHER WIDGET */
+.weather-widget {
+  background: #fff;
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 28px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  position: relative;
+}
+.weather-widget.loading { opacity: 0.6; }
+.ww-location {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #999; margin-bottom: 2px;
+  display: flex; align-items: center; gap: 5px;
+}
+.ww-location svg { width: 12px; height: 12px; }
+.ww-temp {
+  font-size: 48px; font-weight: 700; color: var(--red);
+  line-height: 1; margin-right: 20px;
+}
+.ww-temp sup { font-size: 20px; font-weight: 400; vertical-align: super; }
+.ww-desc {
+  font-size: 14px; font-weight: 600; color: #444; margin-bottom: 10px;
+}
+.ww-stats {
+  display: flex; gap: 16px; flex-wrap: wrap;
+}
+.ww-stat {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 13px; color: #666;
+}
+.ww-stat svg { width: 15px; height: 15px; color: #aaa; flex-shrink: 0; }
+.ww-stat strong { color: #333; font-weight: 600; }
+.ww-left { flex: 1; min-width: 120px; }
+.ww-right { display: flex; flex-direction: column; justify-content: center; }
+.ww-icon { font-size: 52px; line-height: 1; margin-right: 16px; }
+.ww-refresh {
+  position: absolute; top: 14px; right: 14px;
+  background: none; border: none; cursor: pointer;
+  color: #ccc; padding: 4px; border-radius: 4px;
+  transition: color 0.15s;
+}
+.ww-refresh:hover { color: var(--red); }
+.ww-refresh svg { width: 14px; height: 14px; }
+.ww-error { font-size: 13px; color: #999; font-style: italic; }
+.ww-time { font-size: 11px; color: #bbb; margin-top: 8px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinning { animation: spin 1s linear infinite; }
+
+  .sidebar { width: var(--sidebar-col); }
+  .main { margin-left: var(--sidebar-col); }
+  .main.wide { margin-left: var(--sidebar-col); }
+  .page { padding: 18px 14px 40px; }
+  .tile { width: 100px; height: 92px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="topbar-toggle" onclick="toggleSb()">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="topbar-brand" href="#">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+    </svg>
+    GRAF TGN
+  </a>
+  <span class="topbar-page" id="tbar-title">GESTIÓ</span>
+</div>
+
+<div class="shell">
+
+  <aside class="sidebar" id="sb">
+    <div class="sb-label">Menú</div>
+
+    <button class="nav-btn active" onclick="go('gestio',this,'GESTIÓ')">
+      <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+      <span class="nav-lbl">Gestió</span>
+    </button>
+
+    <button class="nav-btn" onclick="go('meteo',this,'METEOROLOGIA')">
+      <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></span>
+      <span class="nav-lbl">Meteorologia</span>
+    </button>
+
+    <button class="nav-btn" onclick="go('cremes',this,'CREMES')">
+      <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></span>
+      <span class="nav-lbl">Cremes</span>
+    </button>
+
+    <button class="nav-btn" onclick="go('projectes',this,'PROJECTES')">
+      <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>
+      <span class="nav-lbl">Projectes</span>
+    </button>
+
+    
+
+    <div class="sb-divider"></div>
+    <div class="sb-footer">
+      <button class="nav-btn" style="color:rgba(255,255,255,0.35)">
+        <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg></span>
+        <span class="nav-lbl">Configuració</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main" id="mn">
+
+    <!-- GESTIÓ -->
+    <div class="page active" id="page-gestio">
+      <div class="ph">
+        <h1>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Gestió de la guàrdia
+        </h1>
+        <p>Eines i recursos per a la gestió operativa del torn de guàrdia</p>
+      </div>
+      <div class="sec">
+        <div class="sec-title">Accés ràpid</div>
+        <div class="tiles">
+          <a class="tile" href="https://gencat-my.sharepoint.com/:x:/g/personal/graftar_gencat_cat/EcaZUxmWZFVBt6bfPjaPOPUBEcfAL6WSR-fhxAPMqhC4-g?e=HIAB6G">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <span>2026_GRAF TGN</span>
+          </a>
+          <a class="tile" href="https://teams.microsoft.com/meet/3769271789271?p=l1xPuyH3j4a7xvA1xj">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Briefing GRAF 01</span>
+          </a>
+          <a class="tile" href="https://docs.google.com/forms/d/e/1FAIpQLSchMaGTSlN5WAa-j1vuIk1qtRiZIOeTKFUkJz71PChPdyPwrg/viewform">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span>Comanda de material</span>
+          </a>
+	  <a class="tile" href="#">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Vehicles</span>
+          </a>
+          <a class="tile" href="https://teams.microsoft.com/meet/386717390624?p=ZPHe5x">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Briefing Regió</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-title">Planificació i sol·licituds</div>
+        <div class="tiles">
+
+          <!-- Obre PDF Jornada i Horari -->
+          <a class="tile" href="PRO_RH_001_v3_2025.pdf" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <rect x="7" y="12" width="4" height="1.5" rx="0.5" fill="white" stroke="none"/>
+              <rect x="7" y="15" width="6" height="1.5" rx="0.5" fill="white" stroke="none"/>
+              <text x="8.5" y="10.5" font-size="3.5" font-weight="700" fill="white" font-family="sans-serif" stroke="none">PDF</text>
+            </svg>
+            <span>Jornada i Horari</span>
+          </a>
+
+          <!-- Obre PDF Manual Permisos ATRI -->
+          <a class="tile" href="MANUAL_ATRI_permisos_V3.pdf" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <rect x="7" y="12" width="4" height="1.5" rx="0.5" fill="white" stroke="none"/>
+              <rect x="7" y="15" width="6" height="1.5" rx="0.5" fill="white" stroke="none"/>
+              <text x="8.5" y="10.5" font-size="3.5" font-weight="700" fill="white" font-family="sans-serif" stroke="none">PDF</text>
+            </svg>
+            <span>Manual permisos ATRI</span>
+          </a>
+
+          <!-- Obre PDF Manual Dietes -->
+          <a class="tile" href="TRAMITACIO_DIETES_DGOE_v2.pdf" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <rect x="7" y="12" width="4" height="1.5" rx="0.5" fill="white" stroke="none"/>
+              <rect x="7" y="15" width="6" height="1.5" rx="0.5" fill="white" stroke="none"/>
+              <text x="8.5" y="10.5" font-size="3.5" font-weight="700" fill="white" font-family="sans-serif" stroke="none">PDF</text>
+            </svg>
+            <span>Manual dietes</span>
+          </a>
+
+          <!-- Descarrega DOCX Sol·licitud Permís -->
+          <a class="tile" href="FRM_RH_005_actualitzat.docx" download="FRM_RH_005_actualitzat.docx">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <text x="7" y="10.5" font-size="3" font-weight="700" fill="white" font-family="sans-serif" stroke="none">DOC</text>
+              <rect x="7" y="12" width="5" height="1.5" rx="0.5" fill="white" stroke="none"/>
+              <rect x="7" y="15" width="7" height="1.5" rx="0.5" fill="white" stroke="none"/>
+              <polyline points="12 17 12 21 9 19" stroke="white" stroke-width="1.2"/>
+              <polyline points="12 21 15 19" stroke="white" stroke-width="1.2"/>
+            </svg>
+            <span>Sol·licitud permís</span>
+          </a>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- CREMES -->
+    <div class="page" id="page-cremes">
+      <div class="ph">
+        <h1>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+          Cremes
+        </h1>
+        <p>Gestió i registre de cremes controlades</p>
+      </div>
+      <div class="placeholder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+        <p>Contingut en construcció</p>
+      </div>
+    </div>
+
+    <!-- PROJECTES -->
+    <div class="page" id="page-projectes">
+      <div class="ph">
+        <h1>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          Projectes GRAF TGN
+        </h1>
+        <p>Seguiment i documentació de projectes actius</p>
+      </div>
+      <div class="placeholder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <p>Contingut en construcció</p>
+      </div>
+    </div>
+
+    <!-- METEOROLOGIA -->
+    <div class="page" id="page-meteo">
+      <div class="ph">
+        <h1>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+          Meteorologia
+        </h1>
+        <p>Eines meteorològiques i de predicció de risc</p>
+      </div>
+
+      <!-- WEATHER WIDGET -->
+      <div class="weather-widget loading" id="ww">
+        <button class="ww-refresh" onclick="loadWeather()" title="Actualitzar">
+          <svg id="ww-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
+        <div class="ww-icon" id="ww-icon">⏳</div>
+        <div>
+          <div class="ww-location" id="ww-location">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span id="ww-loc-text">Obtenint localització...</span>
+          </div>
+          <div class="ww-left">
+            <div style="display:flex;align-items:baseline;gap:4px">
+              <div class="ww-temp" id="ww-temp">--<sup>°C</sup></div>
+              <div class="ww-desc" id="ww-desc"></div>
+            </div>
+            <div class="ww-stats">
+              <div class="ww-stat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                <span>Humitat: <strong id="ww-hum">--%</strong></span>
+              </div>
+              <div class="ww-stat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.59 4.59A2 2 0 1 1 11 8H2"/><path d="M10.59 11.41A2 2 0 1 0 12 15H2"/><path d="M15.73 8.27A2.5 2.5 0 1 1 17.5 12H2"/></svg>
+                <span>Vent: <strong id="ww-wind">-- km/h</strong></span>
+              </div>
+              <div class="ww-stat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span id="ww-time" style="font-size:11px;color:#bbb"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-title">Eines meteorològiques</div>
+        <div class="tiles">
+
+          <a class="tile" href="https://www.meteo.cat/prediccio/municipis" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+              <path d="M11.5 8 Q12.5 6 13 8 Q13.5 10 12 11 Q10.5 10 11.5 8Z" fill="white" stroke="none"/>
+            </svg>
+            <span>Predicció general</span>
+          </a>
+
+          <a class="tile" href="https://www.meteo.cat/xema/inici" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+              <line x1="8" y1="19" x2="8" y2="21"/><line x1="8" y1="13" x2="8" y2="15"/>
+              <line x1="16" y1="19" x2="16" y2="21"/><line x1="16" y1="13" x2="16" y2="15"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+            </svg>
+            <span>Dades XEMA</span>
+          </a>
+
+          <a class="tile" href="https://www.windy.com/?rain,41.122,1.249,9" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9.59 4.59A2 2 0 1 1 11 8H2"/>
+              <path d="M10.59 11.41A2 2 0 1 0 12 15H2"/>
+              <path d="M15.73 8.27A2.5 2.5 0 1 1 17.5 12H2"/>
+            </svg>
+            <span>Windy</span>
+          </a>
+
+          <a class="tile" href="https://www.meteo.cat/servmet/diagrames" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <line x1="3" y1="9" x2="21" y2="9"/>
+              <line x1="3" y1="15" x2="21" y2="15"/>
+              <line x1="9" y1="3" x2="9" y2="21"/>
+              <line x1="15" y1="3" x2="15" y2="21"/>
+            </svg>
+            <span>Diagramme</span>
+          </a>
+
+          <a class="tile" href="https://www.meteo.cat/observacions/radar" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+              <polyline points="16 13 12 17 8 13"/>
+            </svg>
+            <span>Radar Meteocat</span>
+          </a>
+
+          <a class="tile" href="https://www.meteo.cat/observacions/llamps" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"/>
+              <polyline points="13 11 9 17 15 17 11 23"/>
+            </svg>
+            <span>Llamps Meteocat</span>
+          </a>
+
+          <a class="tile" href="https://www.aemet.es/es/eltiempo/observacion/radar" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+              <circle cx="12" cy="14" r="2"/>
+            </svg>
+            <span>Radar AEMET</span>
+          </a>
+
+          <a class="tile" href="https://www.lightningmaps.org/?lang=ca" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              <polyline points="11 13 9 17 15 17 13 21" stroke="white" stroke-width="1.6"/>
+            </svg>
+            <span>Lightning Map</span>
+          </a>
+
+          <a class="tile" href="https://www.meteo.cat/observacions/radiosondatge" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 18 7 10 11 14 15 6 19 10 22 6"/>
+              <line x1="3" y1="18" x2="22" y2="18"/>
+            </svg>
+            <span>Radiosondatge</span>
+          </a>
+
+          <a class="tile" href="https://www.meteo.cat/prediccio/modelsNumerics" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+              <polyline points="6 8 10 12 14 9 18 13"/>
+            </svg>
+            <span>Models Meteocat</span>
+          </a>
+
+          <a class="tile" href="https://www.meteoprades.cat" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <polyline points="9 12 11 14 15 10"/>
+            </svg>
+            <span>Meteoprades</span>
+          </a>
+
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+var open = true;
+function toggleSb() {
+  open = !open;
+  document.getElementById('sb').classList.toggle('collapsed', !open);
+  document.getElementById('mn').classList.toggle('wide', !open);
+}
+function go(id, btn, title) {
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('page-' + id).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('tbar-title').textContent = title;
+  if (id === 'meteo') loadWeather();
+}
+
+// ── WEATHER WIDGET ──────────────────────────────────────────────
+var weatherLoaded = false;
+
+function weatherCode(code) {
+  if (code === 0) return { icon: '☀️', desc: 'Cel clar' };
+  if (code <= 2) return { icon: '⛅', desc: 'Parcialment ennuvolat' };
+  if (code === 3) return { icon: '☁️', desc: 'Ennuvolat' };
+  if (code <= 49) return { icon: '🌫️', desc: 'Boira' };
+  if (code <= 59) return { icon: '🌦️', desc: 'Plugim' };
+  if (code <= 69) return { icon: '🌧️', desc: 'Pluja' };
+  if (code <= 79) return { icon: '❄️', desc: 'Neu' };
+  if (code <= 84) return { icon: '🌦️', desc: 'Xàfecs' };
+  if (code <= 99) return { icon: '⛈️', desc: 'Tempesta' };
+  return { icon: '🌡️', desc: 'Desconegut' };
+}
+
+function loadWeather() {
+  var spin = document.getElementById('ww-spin');
+  spin.classList.add('spinning');
+  document.getElementById('ww').classList.add('loading');
+
+  if (!navigator.geolocation) {
+    showWeatherError('Geolocalització no disponible');
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    var lat = pos.coords.latitude.toFixed(4);
+    var lon = pos.coords.longitude.toFixed(4);
+
+    // Reverse geocode with nominatim
+    fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json')
+      .then(function(r){ return r.json(); })
+      .then(function(geo) {
+        var city = geo.address.city || geo.address.town || geo.address.village || geo.address.municipality || 'Localització actual';
+        document.getElementById('ww-loc-text').textContent = city;
+      }).catch(function(){ document.getElementById('ww-loc-text').textContent = lat + ', ' + lon; });
+
+    // Fetch weather from Open-Meteo
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
+      '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&wind_speed_unit=kmh&timezone=auto';
+
+    fetch(url)
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        var c = data.current;
+        var wc = weatherCode(c.weather_code);
+        document.getElementById('ww-temp').innerHTML = Math.round(c.temperature_2m) + '<sup>°C</sup>';
+        document.getElementById('ww-desc').textContent = wc.desc;
+        document.getElementById('ww-icon').textContent = wc.icon;
+        document.getElementById('ww-hum').textContent = c.relative_humidity_2m + '%';
+        document.getElementById('ww-wind').textContent = Math.round(c.wind_speed_10m) + ' km/h';
+        var now = new Date();
+        document.getElementById('ww-time').textContent = 'Actualitzat: ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
+        document.getElementById('ww').classList.remove('loading');
+        spin.classList.remove('spinning');
+        weatherLoaded = true;
+      })
+      .catch(function(){ showWeatherError('No s\'han pogut carregar les dades'); });
+
+  }, function() {
+    showWeatherError('Permís de localització denegat');
+  }, { timeout: 10000 });
+}
+
+function showWeatherError(msg) {
+  document.getElementById('ww-loc-text').textContent = msg;
+  document.getElementById('ww-icon').textContent = '📍';
+  document.getElementById('ww').classList.remove('loading');
+  document.getElementById('ww-spin').classList.remove('spinning');
+}
+
+// Auto-load weather if meteo page is active on first load
+window.addEventListener('load', function() {
+  var activePage = document.querySelector('.page.active');
+  if (activePage && activePage.id === 'page-meteo') loadWeather();
+});
+
+// ── PWA SERVICE WORKER ──────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(function(){});
+}
+</script>
+</body>
+</html>

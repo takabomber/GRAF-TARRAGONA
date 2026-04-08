@@ -1,0 +1,26 @@
+{
+  "name": "GRAF TGN",
+  "short_name": "GRAF TGN",
+  "description": "Portal operatiu del Grup d'Actuació Forestal de Tarragona",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#c0202a",
+  "theme_color": "#c0202a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "productivity"],
+  "lang": "ca"
+}
